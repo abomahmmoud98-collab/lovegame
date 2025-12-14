@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Unser Liebesspiel</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #111;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 960px;
+      aspect-ratio: 16 / 9;
+      border: 2px solid #444;
+      position: relative;
+      overflow: hidden;
+      background: #222;
+    }
+
+    /* Passwort-Overlay */
+    #password-screen {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, #333, #000);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 20px;
+      text-align: center;
+      z-index: 3;
+    }
+
+    #password-screen p {
+      font-size: 1.2rem;
+      max-width: 80%;
+    }
+
+    #password-input {
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #666;
+      background: #111;
+      color: #fff;
+      min-width: 200px;
+      text-align: center;
+    }
+
+    #password-button {
+      padding: 10px 18px;
+      border-radius: 6px;
+      border: none;
+      background: #ff4060;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #password-button:hover {
+      background: #ff6c82;
+    }
+
+    #password-error {
+      color: #ffb3bf;
+      font-size: 0.95rem;
+      min-height: 1.2rem;
+    }
+
+    /* Intro-Overlay nach Passwort */
+    #intro-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px;
+      text-align: center;
+      z-index: 3;
+    }
+
+    #intro-screen h2 {
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+    }
+
+    #intro-screen p {
+      max-width: 80%;
+      font-size: 1rem;
+      opacity: 0.95;
+    }
+
+    #intro-button {
+      margin-top: 10px;
+      padding: 10px 22px;
+      border-radius: 10px;
+      border: none;
+      background: #ff4060;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    #intro-button:hover {
+      background: #ff6c82;
+    }
+
+    /* Canvas */
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #5ecbff;
+    }
+
+    /* Win-Overlay */
+    #win-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 20px;
+      text-align: center;
+      z-index: 4;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    #win-screen h2 {
+      font-size: 1.6rem;
+    }
+
+    #message-text {
+      font-size: 1rem;
+      opacity: 0.9;
+      max-width: 80%;
+    }
+
+    #love-video {
+      max-width: 90%;
+      max-height: 70%;
+      border-radius: 10px;
+      border: 2px solid #ff4060;
+      background: #000;
+    }
+
+    #restart-button {
+      padding: 10px 22px;
+      border-radius: 10px;
+      border: none;
+      background: #ff4060;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    #restart-button:hover {
+      background: #ff6c82;
+    }
+
+    /* HUD */
+    #hud {
+      position: absolute;
+      left: 10px;
+      top: 8px;
+      z-index: 2;
+      font-size: 0.9rem;
+      text-shadow: 0 0 4px #000;
+    }
+
+    /* Touch-Steuerung */
+    #controls {
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      height: 110px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 14px 24px;
+      gap: 30px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .ctrl-group {
+      display: flex;
+      gap: 20px;
+    }
+
+    .ctrl-btn {
+      pointer-events: auto;
+      min-width: 80px;
+      min-height: 80px;
+      border-radius: 50%;
+      border: 2px solid #666;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .ctrl-btn:active {
+      background: rgba(255, 64, 96, 0.9);
+      border-color: #ff4060;
+    }
+
+    @media (max-width: 600px) {
+      #hud { font-size: 0.7rem; }
+      .ctrl-btn {
+        min-width: 72px;
+        min-height: 72px;
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- Passwort -->
+  <div id="password-screen">
+    <p>Gib bitte die Passwort Omri</p>
+    <input type="password" id="password-input" placeholder="Passwort" autocomplete="off" />
+    <button id="password-button">Weiter</button>
+    <div id="password-error"></div>
+  </div>
+
+  <!-- Intro -->
+  <div id="intro-screen">
+    <h2>Willkommen im Love Game</h2>
+    <p>
+      In diesem kleinen Spiel begegnest du ein paar unserer „Probleme“.
+      Du kannst sie besiegen, indem du auf sie springst oder sie mit deinem Herzen triffst.
+      Sammle Herzen, um stärker zu werden – und komm am Ende zu mir.
+    </p>
+    <p><strong>Tipp:</strong> Dreh dein Handy ins Querformat, damit du alles besser sehen und spielen kannst.</p>
+    <button id="intro-button">Los geht's</button>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div>Steuerung: ◀ ▶ ⬆ ❤ (unten auf dem Bildschirm)</div>
+  </div>
+
+  <!-- Canvas -->
+  <canvas id="game-canvas" width="960" height="540"></canvas>
+
+  <!-- Touch -->
+  <div id="controls">
+    <div class="ctrl-group">
+      <button id="btn-left" class="ctrl-btn">◀</button>
+      <button id="btn-right" class="ctrl-btn">▶</button>
+    </div>
+    <div class="ctrl-group">
+      <button id="btn-jump" class="ctrl-btn">⬆</button>
+      <button id="btn-shoot" class="ctrl-btn">❤</button>
+    </div>
+  </div>
+
+  <!-- Win -->
+  <div id="win-screen">
+    <h2>Du hast mein Herz gewonnen</h2>
+    <p id="message-text">
+      Danke, dass du mit mir durch alle Level des Lebens gehst.
+      Jetzt kommt noch eine kleine Nachricht nur für dich.
+    </p>
+    <video id="love-video" controls></video>
+    <button id="restart-button">Nochmal spielen</button>
+  </div>
+
+</div>
+
+<script>
+/***********************************************************
+ * KONFIGURATION
+ ***********************************************************/
+const SECRET_PASSWORD = "151217";
+const VIDEO_FILE = "video.mp4";
+
+const playerImg = new Image();
+playerImg.src = "wife.png";
+let playerImgLoaded = false;
+playerImg.onload = () => { playerImgLoaded = true; };
+
+const husbandImg = new Image();
+husbandImg.src = "husband.png";
+let husbandImgLoaded = false;
+husbandImg.onload = () => { husbandImgLoaded = true; };
+
+/* Soundeffekte (im gleichen Ordner) */
+const sndJump  = new Audio("jump.mp3");
+const sndShoot = new Audio("shoot.mp3");
+const sndHit   = new Audio("hit.mp3");
+const sndHeart = new Audio("heart.mp3");
+const sndDie   = new Audio("die.mp3");
+const sndWin   = new Audio("win.mp3");
+
+function playSound(snd) {
+  try { snd.currentTime = 0; snd.play(); } catch (e) {}
+}
+
+/***********************************************************
+ * PASSWORT & INTRO
+ ***********************************************************/
+const passwordScreen = document.getElementById("password-screen");
+const passwordInput  = document.getElementById("password-input");
+const passwordButton = document.getElementById("password-button");
+const passwordError  = document.getElementById("password-error");
+
+const introScreen = document.getElementById("intro-screen");
+const introButton = document.getElementById("intro-button");
+
+let wrongTries = 0;
+
+function showIntro() {
+  introScreen.style.display = "flex";
+}
+
+function checkPassword() {
+  if (passwordInput.value === SECRET_PASSWORD) {
+    passwordError.textContent = "";
+    passwordScreen.style.display = "none";
+    showIntro();
+    return;
+  }
+
+  wrongTries++;
+
+  if (wrongTries === 1) {
+    passwordError.textContent = "Nicht dein Ernst 😄";
+  } else if (wrongTries === 2) {
+    passwordError.textContent = "Kennst du es wirklich nicht? 😅";
+  } else {
+    passwordError.textContent = "Jadba, es ist unser Jahrestagdatum.";
+  }
+
+  passwordInput.value = "";
+  passwordInput.focus();
+}
+
+passwordButton.addEventListener("click", checkPassword);
+passwordInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") checkPassword();
+});
+
+introButton.addEventListener("click", () => {
+  introScreen.style.display = "none";
+  startGame();
+});
+
+/***********************************************************
+ * INPUT (Keyboard + Touch)
+ ***********************************************************/
+const keys = { left: false, right: false, jump: false };
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "ArrowLeft")  keys.left = true;
+  if (e.code === "ArrowRight") keys.right = true;
+  if (e.code === "Space")      keys.jump = true;
+  if (e.code === "KeyF")       shootHeart();
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.code === "ArrowLeft")  keys.left = false;
+  if (e.code === "ArrowRight") keys.right = false;
+  if (e.code === "Space")      keys.jump = false;
+});
+
+function bindButton(btn, onDown, onUp) {
+  const down = (e) => { e.preventDefault(); onDown(); };
+  const up   = (e) => { e.preventDefault(); onUp(); };
+  btn.addEventListener("mousedown", down);
+  btn.addEventListener("mouseup", up);
+  btn.addEventListener("mouseleave", up);
+  btn.addEventListener("touchstart", down, { passive: false });
+  btn.addEventListener("touchend", up, { passive: false });
+}
+
+bindButton(document.getElementById("btn-left"),  () => { keys.left = true;  }, () => { keys.left = false; });
+bindButton(document.getElementById("btn-right"), () => { keys.right = true; }, () => { keys.right = false; });
+bindButton(document.getElementById("btn-jump"),  () => { keys.jump = true;  }, () => { keys.jump = false; });
+bindButton(document.getElementById("btn-shoot"), () => { shootHeart();      }, () => {});
+
+/***********************************************************
+ * GAME WORLD
+ ***********************************************************/
+const canvas = document.getElementById("game-canvas");
+const ctx = canvas.getContext("2d");
+
+const gravity = 0.9;
+const friction = 0.8;
+
+let player, platforms, enemies, hearts, flag, castle, projectiles;
+let gameRunning, cameraX, inFlagSequence, flagPhase;
+
+function createLevel() {
+  const baseW = 30;
+  const baseH = 42;
+
+  player = {
+    x: 80,
+    y: 320,
+    baseW, baseH,
+    w: baseW,
+    h: baseH,
+    vx: 0,
+    vy: 0,
+    speed: 4.2,
+    jumpStrength: -16,
+    onGround: false,
+    facing: 1,
+    sizeLevel: 0
+  };
+
+  cameraX = 0;
+  inFlagSequence = false;
+  flagPhase = null;
+
+  const worldWidth = 2200;
+  platforms = [];
+  const groundY = 420;
+
+  // Boden
+  platforms.push({ x: 0, y: groundY, w: worldWidth, h: 40 });
+
+  // Stufen
+  platforms.push({ x: 500,  y: 330, w: 120, h: 20 });
+  platforms.push({ x: 750,  y: 300, w: 120, h: 20 });
+  platforms.push({ x: 1000, y: 270, w: 120, h: 20 });
+
+  // Treppe rechts
+  const stepWidth = 40;
+  const stepHeight = 20;
+  const baseX = 1600;
+  const baseY = groundY;
+
+  for (let i = 0; i < 6; i++) {
+    platforms.push({
+      x: baseX + i * stepWidth,
+      y: baseY - (i + 1) * stepHeight,
+      w: stepWidth,
+      h: stepHeight
+    });
+  }
+  const stepTopY = baseY - 6 * stepHeight;
+
+  // Flag
+  flag = { x: baseX + 6 * stepWidth + 30, w: 25, h: 180, baseY: groundY };
+  flag.y = flag.baseY - flag.h;
+
+  // Castle
+  castle = { x: flag.x + 110, y: groundY - 120, w: 180, h: 120 };
+
+  // Enemies (Zombie-Einheit)
+  enemies = [
+    { x: 350,  y: groundY - 36, w: 32, h: 40, vx:  1.2, left: 320,  right: 460,  alive: true, label: "Stress" },
+    { x: 820,  y: groundY - 36, w: 32, h: 40, vx: -1.2, left: 760,  right: 880,  alive: true, label: "Zeit" },
+    { x: 1150, y: groundY - 36, w: 32, h: 40, vx:  1.0, left: 1120, right: 1240, alive: true, label: "Kommunikation" },
+    { x: 1450, y: groundY - 36, w: 32, h: 40, vx: -1.0, left: 1400, right: 1520, alive: true, label: "Missverständnis" }
+  ];
+
+  // Hearts
+  hearts = [
+    { x: 520,                 y: 330 - 30,    w: 24, h: 24 },
+    { x: 770,                 y: 300 - 30,    w: 24, h: 24 },
+    { x: baseX + 3*stepWidth, y: stepTopY-40, w: 24, h: 24 }
+  ];
+
+  projectiles = [];
+  gameRunning = true;
+}
+
+function restartGame() {
+  playSound(sndDie);
+  createLevel();
+}
+
+function shootHeart() {
+  if (!gameRunning || inFlagSequence) return;
+  const speed = 8;
+  const proj = {
+    x: player.x + player.w / 2,
+    y: player.y + player.h / 2,
+    w: 12,
+    h: 10,
+    vx: player.facing >= 0 ? speed : -speed
+  };
+  projectiles.push(proj);
+  playSound(sndShoot);
+}
+
+function startGame() {
+  createLevel();
+  requestAnimationFrame(loop);
+}
+
+function rectsCollide(a, b) {
+  return (
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y
+  );
+}
+
+/************ GROW **************/
+function growFromHeart() {
+  if (player.sizeLevel < 3) player.sizeLevel++;
+  const factor = 1 + 0.18 * player.sizeLevel;
+  player.w = player.baseW * factor;
+  player.h = player.baseH * factor;
+  player.speed = 4.2 + 0.35 * player.sizeLevel;
+  player.jumpStrength = -16 - 1.1 * player.sizeLevel;
+}
+
+function handlePhysics() {
+  if (inFlagSequence) { updateFlagSequence(); return; }
+
+  if (keys.left) {
+    player.vx = -player.speed;
+    player.facing = -1;
+  } else if (keys.right) {
+    player.vx = player.speed;
+    player.facing = 1;
+  } else {
+    player.vx *= friction;
+    if (Math.abs(player.vx) < 0.15) player.vx = 0;
+  }
+
+  if (keys.jump && player.onGround) {
+    player.vy = player.jumpStrength;
+    player.onGround = false;
+    playSound(sndJump);
+  }
+
+  const prevX = player.x;
+  const prevY = player.y;
+
+  player.vy += gravity;
+  player.x += player.vx;
+  player.y += player.vy;
+
+  if (player.x < 0) player.x = 0;
+  if (player.x > 2200 - player.w) player.x = 2200 - player.w;
+
+  player.onGround = false;
+
+  // Platform collision (head counts too)
+  for (const p of platforms) {
+    if (!rectsCollide(player, p)) continue;
+
+    const prevBottom = prevY + player.h;
+    const prevTop = prevY;
+    const prevRight = prevX + player.w;
+    const prevLeft = prevX;
+
+    if (prevBottom <= p.y && player.vy >= 0) {
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.onGround = true;
+    } else if (prevTop >= p.y + p.h && player.vy <= 0) {
+      player.y = p.y + p.h;
+      player.vy = 0;
+    } else if (prevRight <= p.x && player.vx > 0) {
+      player.x = p.x - player.w;
+      player.vx = 0;
+    } else if (prevLeft >= p.x + p.w && player.vx < 0) {
+      player.x = p.x + p.w;
+      player.vx = 0;
+    }
+  }
+
+  // Enemies move
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    e.x += e.vx;
+    if (e.x < e.left || e.x + e.w > e.right) e.vx *= -1;
+  }
+
+  // Player vs enemy (stomp kills, touch kills player)
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    if (!rectsCollide(player, e)) continue;
+
+    const wasAbove = prevY + player.h <= e.y;
+
+    if (player.vy > 0 && wasAbove) {
+      e.alive = false;
+      player.vy = player.jumpStrength * 0.6;
+      playSound(sndHit);
+    } else {
+      playSound(sndHit);
+      restartGame();
+      return;
+    }
+  }
+
+  // Projectiles (only hit visible enemies)
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const pr = projectiles[i];
+    pr.x += pr.vx;
+
+    if (pr.x < 0 || pr.x > 2300) {
+      projectiles.splice(i, 1);
+      continue;
+    }
+
+    for (const e of enemies) {
+      if (!e.alive) continue;
+
+      const enemyVisible = (e.x + e.w > cameraX) && (e.x < cameraX + canvas.width);
+      if (!enemyVisible) continue;
+
+      if (rectsCollide(pr, e)) {
+        e.alive = false;
+        projectiles.splice(i, 1);
+        playSound(sndHit);
+        break;
+      }
+    }
+  }
+
+  // Hearts collect
+  for (let i = hearts.length - 1; i >= 0; i--) {
+    const h = hearts[i];
+    if (rectsCollide(player, h)) {
+      hearts.splice(i, 1);
+      growFromHeart();
+      playSound(sndHeart);
+    }
+  }
+
+  // Flag
+  if (rectsCollide(player, flag)) startFlagSequence();
+
+  // Camera follow
+  const margin = canvas.width / 3;
+  const center = player.x - cameraX;
+
+  if (center > canvas.width - margin) {
+    cameraX = Math.min(player.x - (canvas.width - margin), 2200 - canvas.width);
+  } else if (center < margin) {
+    cameraX = Math.max(player.x - margin, 0);
+  }
+}
+
+/**************** FLAG SEQUENCE ****************/
+function startFlagSequence() {
+  if (inFlagSequence) return;
+  inFlagSequence = true;
+  flagPhase = "slide";
+  player.vx = 0;
+  player.vy = 0;
+  player.x = flag.x + flag.w / 2 - player.w / 2;
+}
+
+function updateFlagSequence() {
+  // keep camera
+  const margin = canvas.width / 3;
+  const center = player.x - cameraX;
+  if (center > canvas.width - margin) {
+    cameraX = Math.min(player.x - (canvas.width - margin), 2200 - canvas.width);
+  } else if (center < margin) {
+    cameraX = Math.max(player.x - margin, 0);
+  }
+
+  const targetY = flag.baseY - player.h;
+
+  if (flagPhase === "slide") {
+    if (player.y < targetY) player.y += 4;
+    else { player.y = targetY; flagPhase = "walk"; }
+  } else if (flagPhase === "walk") {
+    const targetX = castle.x + castle.w * 0.35;
+    if (player.x < targetX) player.x += 2.5;
+    else { player.x = targetX; winGame(); }
+  }
+}
+
+/***********************************************************
+ * DRAWING
+ ***********************************************************/
+function drawBackground() {
+  ctx.save();
+  ctx.translate(-cameraX * 0.4, 0);
+
+  ctx.fillStyle = "#5ecbff";
+  ctx.fillRect(0, 0, canvas.width + 800, canvas.height);
+
+  ctx.fillStyle = "#4bb74f";
+  ctx.beginPath();
+  ctx.arc(200, 430, 140, Math.PI, 2 * Math.PI);
+  ctx.arc(600, 450, 160, Math.PI, 2 * Math.PI);
+  ctx.arc(1100, 440, 130, Math.PI, 2 * Math.PI);
+  ctx.fill();
+
+  function cloud(x, y) {
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.arc(x + 18, y + 4, 16, 0, Math.PI * 2);
+    ctx.arc(x - 18, y + 6, 16, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  cloud(150, 90);
+  cloud(420, 70);
+  cloud(850, 100);
+  cloud(1250, 80);
+
+  ctx.restore();
+}
+
+function drawPlatforms() {
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+  for (const p of platforms) {
+    ctx.fillStyle = "#b06b33";
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = "#d98c48";
+    ctx.fillRect(p.x, p.y, p.w, 6);
+    ctx.strokeStyle = "rgba(0,0,0,0.2)";
+    for (let x = p.x; x < p.x + p.w; x += 20) {
+      ctx.beginPath();
+      ctx.moveTo(x, p.y + 6);
+      ctx.lineTo(x, p.y + p.h);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+/* FIGUR: wieder wie vorher (runder Kopf/Clip), aber Gesicht leicht links + Mütze höher */
+function drawPlayer() {
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  if (playerImgLoaded) {
+    const bodyW = player.w * 1.7;
+    const bodyH = player.h * 2.0;
+    const drawX = player.x - (bodyW - player.w) / 2;
+    const drawY = player.y - (bodyH - player.h);
+
+    // Körper
+    ctx.fillStyle = "#2456d1";
+    ctx.fillRect(drawX + bodyW * 0.25, drawY + bodyH * 0.45, bodyW * 0.5, bodyH * 0.4);
+
+    // Beine
+    ctx.fillRect(drawX + bodyW * 0.28, drawY + bodyH * 0.8, bodyW * 0.15, bodyH * 0.2);
+    ctx.fillRect(drawX + bodyW * 0.57, drawY + bodyH * 0.8, bodyW * 0.15, bodyH * 0.2);
+
+    // Schuhe
+    ctx.fillStyle = "#5b3620";
+    ctx.fillRect(drawX + bodyW * 0.26, drawY + bodyH * 0.97, bodyW * 0.18, bodyH * 0.05);
+    ctx.fillRect(drawX + bodyW * 0.56, drawY + bodyH * 0.97, bodyW * 0.18, bodyH * 0.05);
+
+    // Shirt
+    ctx.fillStyle = "#d12a2a";
+    ctx.fillRect(drawX + bodyW * 0.23, drawY + bodyH * 0.35, bodyW * 0.54, bodyH * 0.2);
+
+    // Ärmel
+    ctx.fillStyle = "#2456d1";
+    ctx.fillRect(drawX + bodyW * 0.28, drawY + bodyH * 0.35, bodyW * 0.08, bodyH * 0.2);
+    ctx.fillRect(drawX + bodyW * 0.64, drawY + bodyH * 0.35, bodyW * 0.08, bodyH * 0.2);
+
+    // Knöpfe
+    ctx.fillStyle = "#ffd85a";
+    ctx.beginPath();
+    ctx.arc(drawX + bodyW * 0.32, drawY + bodyH * 0.48, 4, 0, Math.PI * 2);
+    ctx.arc(drawX + bodyW * 0.68, drawY + bodyH * 0.48, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Kopf (runder Clip wie vorher)
+    const headSize = bodyW * 0.7;
+    const headX = drawX + bodyW * 0.18;    // leicht nach links
+    const headY = drawY - headSize * 0.25; // wie vorher
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(headX + headSize / 2, headY + headSize / 2, headSize / 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(playerImg, headX, headY, headSize, headSize);
+    ctx.restore();
+
+    // Mütze höher
+    ctx.fillStyle = "#d12a2a";
+    ctx.beginPath();
+    ctx.ellipse(
+      headX + headSize / 2,
+      headY - headSize * 0.12,
+      headSize * 0.45,
+      headSize * 0.18,
+      0,
+      Math.PI,
+      0,
+      true
+    );
+    ctx.fill();
+
+    ctx.restore();
+    return;
+  }
+
+  // Fallback
+  ctx.fillStyle = "#ffd19c";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+  ctx.restore();
+}
+
+function drawEnemies() {
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+  ctx.textAlign = "center";
+  ctx.font = "12px system-ui";
+
+  for (const e of enemies) {
+    if (!e.alive) continue;
+
+    // Zombie Körper
+    ctx.fillStyle = "#4b6f3a";
+    ctx.fillRect(e.x, e.y + e.h * 0.25, e.w, e.h * 0.6);
+
+    // Zombie Kopf
+    ctx.fillStyle = "#8ac26a";
+    ctx.fillRect(e.x, e.y, e.w, e.h * 0.4);
+
+    // Augen
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(e.x + e.w * 0.18, e.y + e.h * 0.1, 6, 6);
+    ctx.fillRect(e.x + e.w * 0.58, e.y + e.h * 0.1, 6, 6);
+    ctx.fillStyle = "#000";
+    ctx.fillRect(e.x + e.w * 0.2, e.y + e.h * 0.12, 3, 3);
+    ctx.fillRect(e.x + e.w * 0.6, e.y + e.h * 0.12, 3, 3);
+
+    // Mund
+    ctx.strokeStyle = "#2c3e1f";
+    ctx.beginPath();
+    ctx.moveTo(e.x + e.w * 0.25, e.y + e.h * 0.3);
+    ctx.lineTo(e.x + e.w * 0.75, e.y + e.h * 0.32);
+    ctx.stroke();
+
+    // Arme
+    ctx.fillStyle = "#4b6f3a";
+    ctx.fillRect(e.x - 4, e.y + e.h * 0.4, 8, e.h * 0.25);
+    ctx.fillRect(e.x + e.w - 4, e.y + e.h * 0.38, 8, e.h * 0.27);
+
+    // Label
+    if (e.label) {
+      ctx.fillStyle = "#000";
+      ctx.fillText(e.label, e.x + e.w / 2, e.y - 6);
+    }
+  }
+
+  ctx.restore();
+}
+
+/* Sammel-Herzen = echtes Symbol (rosa) */
+function drawHearts() {
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  for (const h of hearts) {
+    const cx = h.x + h.w / 2;
+    const cy = h.y + h.h / 2;
+    ctx.font = "bold 20px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ff70a8";
+    ctx.fillText("♥", cx, cy + 1);
+  }
+
+  ctx.restore();
+}
+
+function drawProjectiles() {
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  for (const pr of projectiles) {
+    ctx.fillStyle = "#ffbfd1";
+    ctx.beginPath();
+    const cx = pr.x + pr.w / 2;
+    const cy = pr.y + pr.h / 2;
+    const r = 4;
+    ctx.arc(cx - 3, cy, r, 0, Math.PI * 2);
+    ctx.arc(cx + 3, cy, r, 0, Math.PI * 2);
+    ctx.moveTo(cx - 7, cy + 1);
+    ctx.lineTo(cx, cy + 8);
+    ctx.lineTo(cx + 7, cy + 1);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawFlagAndCastle() {
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  // Flag pole
+  const poleX = flag.x + flag.w / 2;
+  ctx.fillStyle = "#dddddd";
+  ctx.fillRect(poleX - 3, flag.y, 6, flag.h);
+
+  // White flag
+  const flagWidth = 90;
+  const flagHeight = 54;
+  const flagTopY = flag.y + 20;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(poleX, flagTopY, flagWidth, flagHeight);
+
+  // Heart + 8 centered
+  const heartCx = poleX + flagWidth / 2;
+  const heartCy = flagTopY + flagHeight / 2;
+
+  ctx.fillStyle = "#ff0000";
+  ctx.font = "bold 34px system-ui";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("♥", heartCx, heartCy + 2);
+
+  ctx.fillStyle = "#000000";
+  ctx.font = "bold 18px system-ui";
+  ctx.fillText("8", heartCx, heartCy + 1);
+
+  // Castle
+  ctx.fillStyle = "#7d4c31";
+  ctx.fillRect(castle.x, castle.y, castle.w, castle.h);
+
+  // Door
+  ctx.fillStyle = "#2c1b11";
+  ctx.beginPath();
+  const doorW = castle.w * 0.2;
+  const doorH = castle.h * 0.6;
+  const doorX = castle.x + castle.w * 0.4;
+  const doorY = castle.y + castle.h - doorH;
+  ctx.moveTo(doorX, castle.y + castle.h);
+  ctx.lineTo(doorX, doorY + doorH * 0.4);
+  ctx.arc(doorX + doorW / 2, doorY + doorH * 0.4, doorW / 2, Math.PI, 0);
+  ctx.lineTo(doorX + doorW, castle.y + castle.h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Battlements
+  ctx.fillStyle = "#995f3c";
+  const topY = castle.y - 18;
+  for (let i = 0; i < 5; i++) {
+    const bx = castle.x + i * (castle.w / 5);
+    ctx.fillRect(bx + 4, topY, castle.w / 5 - 8, 18);
+  }
+
+  // Husband at end (same max level size) + bouquet
+  const baseW = 30;
+  const baseH = 42;
+  const maxLevel = 3;
+  const factor = 1 + 0.18 * maxLevel;
+  const finalW = baseW * factor;
+  const finalH = baseH * factor;
+  const bodyW = finalW * 1.7;
+  const bodyH = finalH * 2.0;
+
+  const heroX = doorX + doorW / 2 - bodyW / 2;
+  const heroY = castle.y + castle.h - bodyH;
+
+  if (husbandImgLoaded) {
+    // body
+    ctx.fillStyle = "#2456d1";
+    ctx.fillRect(heroX + bodyW * 0.25, heroY + bodyH * 0.45, bodyW * 0.5, bodyH * 0.4);
+
+    ctx.fillStyle = "#5b3620";
+    ctx.fillRect(heroX + bodyW * 0.25, heroY + bodyH * 0.8, bodyW * 0.5, bodyH * 0.2);
+
+    // head (round clip like before)
+    const headSize = bodyW * 0.7;
+    const headX = heroX + bodyW * 0.15;
+    const headY = heroY - headSize * 0.15;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(headX + headSize / 2, headY + headSize / 2, headSize / 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(husbandImg, headX, headY, headSize, headSize);
+    ctx.restore();
+
+    // arm + bouquet
+    ctx.fillStyle = "#d12a2a";
+    const armY2 = heroY + bodyH * 0.52;
+    const armX2 = heroX + bodyW * 0.65;
+    const armW2 = bodyW * 0.3;
+    const armH2 = bodyH * 0.08;
+    ctx.fillRect(armX2, armY2, armW2, armH2);
+
+    ctx.fillStyle = "#2e8b57";
+    ctx.fillRect(armX2 + armW2 - 4, armY2 - 10, 4, 26);
+
+    ctx.fillStyle = "#ff9bd5";
+    ctx.beginPath();
+    ctx.arc(armX2 + armW2, armY2 - 6, 6, 0, Math.PI * 2);
+    ctx.arc(armX2 + armW2 - 6, armY2 - 2, 5, 0, Math.PI * 2);
+    ctx.arc(armX2 + armW2 + 4, armY2, 5, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = "#ffd19c";
+    ctx.fillRect(heroX, heroY, finalW, finalH);
+  }
+
+  ctx.restore();
+}
+
+function loop() {
+  if (!gameRunning) return;
+  handlePhysics();
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawPlatforms();
+  drawHearts();
+  drawEnemies();
+  drawProjectiles();
+  drawFlagAndCastle();
+  drawPlayer();
+
+  requestAnimationFrame(loop);
+}
+
+/***********************************************************
+ * WIN SCREEN & VIDEO (Pause kürzer + Fade-In)
+ ***********************************************************/
+const winScreen = document.getElementById("win-screen");
+const loveVideo = document.getElementById("love-video");
+const restartButton = document.getElementById("restart-button");
+
+loveVideo.src = VIDEO_FILE;
+
+function winGame() {
+  gameRunning = false;
+
+  // kürzere Pause
+  setTimeout(() => {
+    winScreen.style.display = "flex";
+    winScreen.style.opacity = "0";
+    void winScreen.offsetWidth;
+    winScreen.style.opacity = "1";
+
+    loveVideo.pause();
+    loveVideo.currentTime = 0;
+    loveVideo.load();
+    playSound(sndWin);
+  }, 2000);
+}
+
+restartButton.addEventListener("click", () => {
+  winScreen.style.opacity = "0";
+  winScreen.style.display = "none";
+  loveVideo.pause();
+  loveVideo.currentTime = 0;
+  startGame(); // ohne Passwort neu spielen
+});
+</script>
+
+</body>
+</html>
